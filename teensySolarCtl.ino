@@ -1,3 +1,5 @@
+// 1/17/16 JP
+
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <Wire.h>
@@ -18,13 +20,12 @@
 
 HardwareSerial uart = HardwareSerial();
 Adafruit_SSD1306 display(OLED_RESET);
-OneWire  ds(ONE_WIRE_BUS); 
+OneWire ds(ONE_WIRE_BUS); 
 DallasTemperature sensors(&ds); 
 
 uint8_t dscount = 0;
 uint8_t loopcount = 0;
 int i=0;
-//float f[4]; // 4 1-wire sensors total
 boolean hbState;
 long lastConnectionTime = 0;
 
@@ -47,9 +48,9 @@ void setup() {
   display.display();
   delay(1000);
   display.invertDisplay(true);
-  delay(500); 
+  delay(300); 
   display.invertDisplay(false);
-  delay(500);
+  delay(300);
   
   // display some text
   display.clearDisplay();
@@ -72,132 +73,15 @@ void setup() {
   if (sensors.isParasitePowerMode()) Serial.println("ON");
   else Serial.println("OFF");
 
-  ds.reset_search();
   // assigns the first address found to insideThermometer
+  ds.reset_search();
   if (!ds.search(insideT1)) Serial.println("Unable to find address for insideT1");
   if (!ds.search(outsideT1)) Serial.println("Unable to find address for outsideT1");
   if (!ds.search(insideT2)) Serial.println("Unable to find address for insideT2");
   if (!ds.search(outsideT2)) Serial.println("Unable to find address for outsideT2");
-  
-  /*/ find the 1-Wire devices
-  byte addr[8];
-  while ( ds.search(addr)) {
-    dscount += 1;
-    delay(250);
-  }
-  ds.reset_search();
-  float f[dscount]; //recast to the # of sensors
-  Serial.println(dscount);
-  ds.reset_search();
-  display.clearDisplay();
-  display.print("Found = ");
-  display.println(dscount);
-  display.display();
-  delay(1000);*/
 }
 
 void loop() {
-  /*byte i;
-  byte present = 0;
-  byte type_s;
-  byte data[12];
-  byte addr[8];
-  float celsius, fahrenheit;*/
-  display.setTextSize(2);
-
-  /*loopcount += 1;
-  if ( !ds.search(addr) ) {
-    Serial.println("No more addresses.");
-    ds.reset_search();
-    delay(500);
-    return;
-  }
-  
-  Serial.print("loopcount= ");
-  Serial.println(loopcount);
-  
-  Serial.print("ROM =");
-  for( i = 0; i < 8; i++) {
-    Serial.write(' ');
-    Serial.print(addr[i], HEX);
-  }
-
-  if (OneWire::crc8(addr, 7) != addr[7]) {
-      Serial.println("CRC is not valid!");
-      return;
-  }*/
-  
-  /*ds.reset();
-  ds.select(addr);
-  ds.write(0x44, 1);        // start conversion, with parasite power on at the end
-  
-  delay(1000);     // maybe 750ms is enough, maybe not
-  // we might do a ds.depower() here, but the reset will take care of it.
-  present = ds.reset();
-  ds.select(addr);    
-  ds.write(0xBE);         // Read Scratchpad
-
-  Serial.print("  Data = ");
-  Serial.print(present, HEX);
-  Serial.print(" ");
-  for ( i = 0; i < 9; i++) { // we need 9 bytes
-    data[i] = ds.read();
-    Serial.print(data[i], HEX);
-    Serial.print(" ");
-  }
-  Serial.print(" CRC=");
-  Serial.print(OneWire::crc8(data, 8), HEX);
-  Serial.println();*/
-
-  /*// Convert the data to actual temperature
-  // because the result is a 16 bit signed integer, it should
-  // be stored to an "int16_t" type, which is always 16 bits
-  // even when compiled on a 32 bit processor.
-  int16_t raw = (data[1] << 8) | data[0];
-  
-  if (type_s) {
-    raw = raw << 3; // 9 bit resolution default
-    if (data[7] == 0x10) {
-      // "count remain" gives full 12 bit resolution
-      raw = (raw & 0xFFF0) + 12 - data[6];
-    }
-  } else {
-    byte cfg = (data[4] & 0x60);
-    // at lower res, the low bits are undefined, so let's zero them
-    if (cfg == 0x00) raw = raw & ~7;  // 9 bit resolution, 93.75 ms
-    else if (cfg == 0x20) raw = raw & ~3; // 10 bit res, 187.5 ms
-    else if (cfg == 0x40) raw = raw & ~1; // 11 bit res, 375 ms
-    // default is 12 bit resolution, 750 ms conversion time
-  }*/
-  /*
-  celsius = (float)raw / 16.0;
-  fahrenheit = celsius * 1.8 + 32.0;
-  f[loopcount] = fahrenheit;
-  Serial.print("  Temp = ");
-  Serial.print(celsius);
-  Serial.print(" C, ");
-  Serial.print(fahrenheit);
-  Serial.println(" F");
-  
-  Serial.print("lc = ");
-  Serial.print(loopcount);
-  Serial.print(" , dscount = ");
-  Serial.println(dscount);
-  */
-  /*// display temps
-  if ( loopcount == dscount ) {
-    display.clearDisplay();
-    display.setCursor(0,0);
-    for (int j=1; j<dscount+1; j+=1) {
-      //display.print(f[j]);
-      display.println(" F");
-    }
-    display.display();
-    loopcount = 0;
-  }*/
-
-  display.setTextSize(2);
-  ledWrite(0, hbState, 0);
   //request temps
   //Serial.print("Requesting temperatures...");
   sensors.requestTemperatures();
@@ -209,24 +93,29 @@ void loop() {
   oT2 = sensors.getTempF(outsideT2);
   
   // display temps
+  display.setTextSize(2);
   display.clearDisplay();
   display.setCursor(0,0);
+  display.print("iT1=");
   display.println(iT1);
   display.setCursor(0,16);
+  display.print("oT1=");
   display.println(oT1);
   display.setCursor(0,32);
+  display.print("iT2=");
   display.println(iT2);
   display.setCursor(0,48);
+  display.print("oT2=");
   display.println(oT2);
   display.display();
-  //ledWrite(0, 0, 0);
   
   if(needUpdate() == 1) {
-    doUpdate(iT1, oT1);
+    doUpdate(iT1, oT1, iT2, oT2);
   }
   //Teensy heartbeat:
   hbState = !hbState;
   digitalWrite(11, hbState);
+  ledWrite(0, hbState, 0);
 }
 
 // Write the rgb led
@@ -279,7 +168,7 @@ void changeSettings(){
 }
 
 // Use WiFly to update cloud...
-void doUpdate(float iT1, float oT1) {
+void doUpdate(float iT1, float oT1, float iT2, float oT2) {
   ledWrite(0, 0, 2);  
   delay(1000);
     Serial.println("updating...");
